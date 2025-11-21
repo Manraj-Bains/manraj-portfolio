@@ -112,6 +112,23 @@
   --sidebar-ring: oklch(0.553 0.013 58.071);
 }
 
+.github-calendar svg {
+  background-color: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+
+  /* shrink vertical whitespace */
+  transform: translateY(-20px);
+}
+
+.github-calendar {
+  max-width: 100%;
+}
+
+.github-calendar svg rect {
+  shape-rendering: crispEdges;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

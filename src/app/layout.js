@@ -1,17 +1,27 @@
 import "./globals.css";
+import { Inter } from "next/font/google";
 import MyNavBar from "@/components/MyNavBar";
+import { Toaster } from "@/components/ui/sonner";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
 
 export const metadata = {
   title: "Manraj Portfolio",
-  description: "Next.js portfolio labs",
+  description: "Next.js portfolio lab",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
+      <body className={inter.className}>
         <MyNavBar />
-        {children}
+        <main className="min-h-screen bg-background text-foreground">
+          {children}
+        </main>
+        <Toaster position="top-right" richColors />
       </body>
     </html>
   );

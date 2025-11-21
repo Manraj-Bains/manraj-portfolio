@@ -1,4 +1,3 @@
-
 export async function POST(req) {
   try {
     const formData = await req.formData();
@@ -15,7 +14,7 @@ export async function POST(req) {
     console.log({ title, description, img, link, keywords });
 
     return Response.json(
-      { ok: true, project: { title, description, img, link, keywords } },
+      { ok: true, project: { title, description, img, laink, keywords } },
       { status: 201 }
     );
   } catch (err) {
