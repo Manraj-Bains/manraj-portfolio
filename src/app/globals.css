@@ -112,22 +112,26 @@
   --sidebar-ring: oklch(0.553 0.013 58.071);
 }
 
-.github-calendar svg {
-  background-color: transparent !important;
-  padding: 0 !important;
-  margin: 0 !important;
-
-  /* shrink vertical whitespace */
-  transform: translateY(-20px);
-}
-
 .github-calendar {
-  max-width: 100%;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+  width: 100%;
 }
 
+/* Force the SVG to scale up cleanly */
+.github-calendar svg {
+  transform: scale(1.75);       /* Increase chart size */
+  transform-origin: top left;   /* So it grows in the right direction */
+  width: auto !important;
+  height: auto !important;
+}
+
+/* Hide extra whitespace so no scrollbars appear */
 .github-calendar svg rect {
   shape-rendering: crispEdges;
 }
+
 
 @layer base {
   * {

@@ -7,30 +7,28 @@ export default async function GithubCalendar() {
 
   try {
     const res = await fetch(`https://ghchart.rshah.org/${GITHUB_USERNAME}`, {
-      next: { revalidate: 86400 },
+      next: { revalidate: 60 * 60 * 24 },
     });
 
-    if (res.ok) {
-      svg = await res.text();
+    if (!res.ok) {
+      throw new Error(`GitHub calendar fetch failed: ${res.status}`);
     }
-  } catch (error) {
-    console.error("Error fetching GitHub calendar:", error);
+
+    svg = await res.text();
+  } catch (err) {
+    console.error("Error fetching GitHub calendar:", err);
   }
 
   return (
-    <Card className="p-6 flex flex-col items-center">
-      <h3 className="text-lg font-semibold mb-6">GitHub activity</h3>
+    <Card className="p-6 overflow-hidden">
+      <h2 className="text-lg font-semibold mb-4">GitHub activity</h2>
 
-      {svg ? (
+      <div className="flex justify-center w-full overflow-x-auto">
         <div
-          className="github-calendar w-full flex justify-center overflow-x-auto"
+          className="scale-[1.111] origin-top"
           dangerouslySetInnerHTML={{ __html: svg }}
         />
-      ) : (
-        <p className="text-sm text-muted-foreground">
-          Unable to load GitHub contribution graph right now.
-        </p>
-      )}
+      </div>
     </Card>
   );
 }

@@ -2,10 +2,8 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
-
-import { contactSchema } from "@/lib/schemas";
 
 import {
   Form,
@@ -14,13 +12,18 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { contactSchema } from "@/lib/schemas";
+
+// we’re in JS, so we skip TS types and just rely on zod at runtime
 
 export default function ContactForm() {
   const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const form = useForm({
     resolver: zodResolver(contactSchema),
@@ -32,26 +35,26 @@ export default function ContactForm() {
   });
 
   async function onSubmit(values) {
-    const id = toast.loading("Sending your message...");
     setSubmitting(true);
+    setSubmitted(false);
 
     try {
       const res = await fetch("/api/contact-me", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(values),
       });
 
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Failed to send message");
+      if (!res.ok) {
+        throw new Error("Contact API failed");
       }
 
-      toast.success("Message sent! I’ll get back to you soon.", { id });
+      setSubmitted(true);
       form.reset();
     } catch (err) {
-      toast.error(err.message || "Something went wrong.", { id });
+      console.error("Error submitting contact form:", err);
     } finally {
       setSubmitting(false);
     }
@@ -61,20 +64,16 @@ export default function ContactForm() {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-6"
+        className="space-y-6 max-w-xl"
       >
         <FormField
           control={form.control}
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Name</FormLabel>
+              <FormLabel>Your name</FormLabel>
               <FormControl>
-                <Input
-                  placeholder="Your name"
-                  {...field}
-                  disabled={submitting}
-                />
+                <Input placeholder="Jhon Cena" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -92,7 +91,6 @@ export default function ContactForm() {
                   type="email"
                   placeholder="you@example.com"
                   {...field}
-                  disabled={submitting}
                 />
               </FormControl>
               <FormMessage />
@@ -109,19 +107,29 @@ export default function ContactForm() {
               <FormControl>
                 <Textarea
                   rows={5}
-                  placeholder="Tell me about your project..."
+                  placeholder="How can I help?"
                   {...field}
-                  disabled={submitting}
                 />
               </FormControl>
+              <FormDescription>
+                Tell me a bit about what you&apos;re looking for.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <Button type="submit" disabled={submitting}>
-          {submitting ? "Sending..." : "Send message"}
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button type="submit" disabled={submitting}>
+            {submitting ? "Sending..." : "Send message"}
+          </Button>
+
+          {submitted && (
+            <p className="text-sm text-emerald-600">
+              Message sent! Check the terminal log for details.
+            </p>
+          )}
+        </div>
       </form>
     </Form>
   );
