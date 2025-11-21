@@ -11,27 +11,23 @@ export async function POST(req) {
 
     if (!parsed.success) {
       return NextResponse.json(
-        {
-          ok: false,
-          message: "Invalid input",
-          errors: parsed.error.flatten(),
-        },
+        { ok: false, message: "Invalid input" },
         { status: 400 }
       );
     }
 
     const { name, email, message } = parsed.data;
 
-    const { data, error } = await resend.emails.send({
+    const { error } = await resend.emails.send({
       from: process.env.RESEND_FROM,
       to: process.env.RESEND_TO,
+      subject: `New message from ${name}`,
       reply_to: email,
-      subject: `New portfolio contact from ${name}`,
       text: `From: ${name} <${email}>\n\n${message}`,
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      console.error(error);
       return NextResponse.json(
         { ok: false, message: "Failed to send email" },
         { status: 500 }
@@ -39,13 +35,13 @@ export async function POST(req) {
     }
 
     return NextResponse.json(
-      { ok: true, message: "Email sent", data },
+      { ok: true, message: "Email sent" },
       { status: 200 }
     );
   } catch (err) {
-    console.error("Contact API error:", err);
+    console.error(err);
     return NextResponse.json(
-      { ok: false, message: "Unexpected server error" },
+      { ok: false, message: "Unexpected error" },
       { status: 500 }
     );
   }

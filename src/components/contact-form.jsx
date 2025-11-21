@@ -1,42 +1,36 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-  FormDescription,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 import { contactSchema } from "@/lib/schemas";
 
-// we’re in JS, so we skip TS types and just rely on zod at runtime
-
 export default function ContactForm() {
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
-  const form = useForm({
-    resolver: zodResolver(contactSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      message: "",
-    },
-  });
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setLoading(true);
 
-  async function onSubmit(values) {
-    setSubmitting(true);
-    setSubmitted(false);
+    const form = new FormData(e.target);
+    const values = {
+      name: form.get("name"),
+      email: form.get("email"),
+      message: form.get("message"),
+    };
+
+    // Zod validation
+    const validated = contactSchema.safeParse(values);
+
+    if (!validated.success) {
+      toast({
+        title: "Invalid input",
+        description: "Double-check your name, email, and message.",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch("/api/contact-me", {
@@ -47,90 +41,76 @@ export default function ContactForm() {
         body: JSON.stringify(values),
       });
 
-      if (!res.ok) {
-        throw new Error("Contact API failed");
+      const data = await res.json();
+
+      if (!data.ok) {
+        toast({
+          title: "Failed to send",
+          description: "The server could not send the message.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
       }
 
-      setSubmitted(true);
-      form.reset();
+      // SUCCESS TOAST
+      toast({
+        title: "Message sent!",
+        description: "Your message has been delivered successfully.",
+      });
+
+      e.target.reset();
     } catch (err) {
-      console.error("Error submitting contact form:", err);
-    } finally {
-      setSubmitting(false);
+      toast({
+        title: "Unexpected error",
+        description: "Something went wrong on the server.",
+        variant: "destructive",
+      });
     }
+
+    setLoading(false);
   }
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-6 max-w-xl"
-      >
-        <FormField
-          control={form.control}
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="text-sm font-medium">Your name</label>
+        <input
           name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Your name</FormLabel>
-              <FormControl>
-                <Input placeholder="Jhon Cena" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+          placeholder="Your name…"
+          required
         />
+      </div>
 
-        <FormField
-          control={form.control}
+      <div>
+        <label className="text-sm font-medium">Email</label>
+        <input
           name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input
-                  type="email"
-                  placeholder="you@example.com"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          type="email"
+          className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+          placeholder="you@example.com"
+          required
         />
+      </div>
 
-        <FormField
-          control={form.control}
+      <div>
+        <label className="text-sm font-medium">Message</label>
+        <textarea
           name="message"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Message</FormLabel>
-              <FormControl>
-                <Textarea
-                  rows={5}
-                  placeholder="How can I help?"
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription>
-                Tell me a bit about what you&apos;re looking for.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
+          className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+          placeholder="How can I help?"
+          rows={4}
+          required
         />
+      </div>
 
-        <div className="flex items-center gap-3">
-          <Button type="submit" disabled={submitting}>
-            {submitting ? "Sending..." : "Send message"}
-          </Button>
-
-          {submitted && (
-            <p className="text-sm text-emerald-600">
-              Message sent! Check the terminal log for details.
-            </p>
-          )}
-        </div>
-      </form>
-    </Form>
+      <button
+        disabled={loading}
+        className="rounded-md bg-black text-white px-4 py-2 text-sm disabled:opacity-50"
+      >
+        {loading ? "Sending…" : "Send message"}
+      </button>
+    </form>
   );
 }
