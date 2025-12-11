@@ -1,13 +1,33 @@
 import Link from "next/link";
 import { auth0 } from "@/lib/auth0";
-import { getProjects } from "@/lib/db";
+
+function getBaseUrl() {
+  return (
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    process.env.AUTH0_BASE_URL ||
+    process.env.APP_BASE_URL ||
+    "http://localhost:3000"
+  );
+}
 
 export default async function ProjectsPage() {
   const session = await auth0.getSession();
   const isAuthenticated = !!session;
 
-  // Call database function directly since this is a server component
-  const projects = await getProjects();
+  let projects = [];
+  try {
+    const res = await fetch(new URL("/api/projects", getBaseUrl()), {
+      cache: "no-store",
+    });
+    if (res.ok) {
+      const data = await res.json();
+      projects = data.projects || [];
+    } else {
+      console.error("Failed to fetch projects via API", res.status);
+    }
+  } catch (error) {
+    console.error("Projects API error", error);
+  }
 
   return (
     <main className="max-w-5xl mx-auto py-10 px-4">
@@ -90,6 +110,11 @@ export default async function ProjectsPage() {
             </div>
           </article>
         ))}
+        {projects.length === 0 && (
+          <p className="text-sm text-muted-foreground">
+            No projects found or failed to load.
+          </p>
+        )}
       </div>
     </main>
   );
