@@ -32,7 +32,7 @@ export default function NewProjectForm() {
         .map((k) => k.trim())
         .filter(Boolean);
 
-      const res = await fetch("/api/projects/new", {
+      const res = await fetch("/api/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

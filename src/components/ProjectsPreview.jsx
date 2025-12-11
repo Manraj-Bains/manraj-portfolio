@@ -3,12 +3,26 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { createSlug } from "@/lib/utils";
-import { getProjects } from "@/lib/db";
+
+function getBaseUrl() {
+  return (
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    process.env.AUTH0_BASE_URL ||
+    process.env.APP_BASE_URL ||
+    "http://localhost:3000"
+  );
+}
 
 export default async function ProjectsPreview() {
   try {
-    // Call database function directly since this is a server component
-    const projects = await getProjects();
+    const res = await fetch(new URL("/api/projects", getBaseUrl()), {
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      throw new Error(`Projects API failed: ${res.status}`);
+    }
+    const data = await res.json();
+    const projects = data.projects || [];
 
     return (
       <section className="mx-auto max-w-5xl px-4 py-8">
@@ -46,6 +60,11 @@ export default async function ProjectsPreview() {
               </Card>
             );
           })}
+          {projects.length === 0 && (
+            <p className="text-sm text-muted-foreground col-span-full">
+              No projects found.
+            </p>
+          )}
         </div>
       </section>
     );

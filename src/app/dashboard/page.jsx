@@ -1,6 +1,7 @@
 // src/app/dashboard/page.jsx
 import { auth0 } from "@/lib/auth0";
 import { redirect } from "next/navigation";
+import HeroEditorForm from "@/components/HeroEditorForm";
 
 export default async function DashboardPage() {
   const session = await auth0.getSession(); // reads cookies on the request
@@ -19,6 +20,11 @@ export default async function DashboardPage() {
       <p className="text-muted-foreground">
         You can now edit/delete projects and use the protected features.
       </p>
+
+      <section className="mt-8 space-y-3">
+        <h2 className="text-xl font-semibold">Hero editor</h2>
+        <HeroEditorForm />
+      </section>
     </main>
   );
 }
