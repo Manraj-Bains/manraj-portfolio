@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { contactSchema } from "@/lib/schemas";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResendClient() {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return null;
+  return new Resend(apiKey);
+}
 
 export async function POST(req) {
   try {
@@ -16,11 +20,23 @@ export async function POST(req) {
       );
     }
 
+    const resend = getResendClient();
+    const from = process.env.RESEND_FROM;
+    const to = process.env.RESEND_TO;
+
+    if (!resend || !from || !to) {
+      console.error("Contact form misconfigured: missing RESEND vars");
+      return NextResponse.json(
+        { ok: false, message: "Email not configured" },
+        { status: 500 }
+      );
+    }
+
     const { name, email, message } = parsed.data;
 
     const { error } = await resend.emails.send({
-      from: process.env.RESEND_FROM,
-      to: process.env.RESEND_TO,
+      from: from,
+      to: to,
       subject: `New message from ${name}`,
       reply_to: email,
       text: `From: ${name} <${email}>\n\n${message}`,
