@@ -1,6 +1,7 @@
 import MyHeroSection from "@/components/MyHeroSection";
 import ProjectsPreview from "@/components/ProjectsPreview";
 import GithubCalendar from "@/components/github-calendar";
+import SkillsVisualizer from "@/components/SkillsVisualizer";
 
 export default function Home() {
   return (
@@ -22,6 +23,22 @@ export default function Home() {
             </h2>
           </div>
           <ProjectsPreview />
+        </section>
+
+        {/* Skills */}
+        <section aria-labelledby="skills-heading">
+          <div className="mb-4 space-y-1">
+            <h2
+              id="skills-heading"
+              className="text-xl font-semibold tracking-tight"
+            >
+              Tech Stack &amp; Skills
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Languages, frameworks, and tools I use most often.
+            </p>
+          </div>
+          <SkillsVisualizer />
         </section>
 
         {/* GitHub calendar */}
