@@ -41,12 +41,14 @@ export default function ContactForm() {
         body: JSON.stringify(values),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
-      if (!data.ok) {
+      if (!res.ok || !data.ok) {
         toast({
           title: "Failed to send",
-          description: "The server could not send the message.",
+          description:
+            data?.message ||
+            "The server could not send the message. Please try again later.",
           variant: "destructive",
         });
         setLoading(false);

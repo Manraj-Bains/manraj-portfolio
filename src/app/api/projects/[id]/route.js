@@ -1,5 +1,5 @@
 import { getProject, updateProject, deleteProject } from "@/lib/db";
-import { auth0 } from "@/lib/auth0";
+import { auth0, isAuthConfigured } from "@/lib/auth0";
 import { projectSchema } from "@/lib/schemas";
 
 function getId(req) {
@@ -20,7 +20,12 @@ export async function GET(req) {
 }
 
 export async function PUT(req) {
-  // Check authentication
+  if (!isAuthConfigured) {
+    return Response.json(
+      { message: "Auth0 not configured" },
+      { status: 500 }
+    );
+  }
   const session = await auth0.getSession();
   if (!session) {
     return Response.json({ message: "Unauthorized" }, { status: 401 });
@@ -42,6 +47,12 @@ export async function PUT(req) {
     await updateProject(id, validated);
     return Response.json({ message: "Updated" });
   } catch (error) {
+    if (error.message?.includes("Database not configured")) {
+      return Response.json(
+        { message: "Database not configured" },
+        { status: 503 }
+      );
+    }
     if (error.name === "ZodError") {
       return Response.json(
         { message: "Validation failed", errors: error.errors },
@@ -57,7 +68,12 @@ export async function PUT(req) {
 }
 
 export async function DELETE(req) {
-  // Check authentication
+  if (!isAuthConfigured) {
+    return Response.json(
+      { message: "Auth0 not configured" },
+      { status: 500 }
+    );
+  }
   const session = await auth0.getSession();
   if (!session) {
     return Response.json({ message: "Unauthorized" }, { status: 401 });
@@ -68,6 +84,12 @@ export async function DELETE(req) {
     await deleteProject(id);
     return Response.json({ message: "Deleted" });
   } catch (error) {
+    if (error.message?.includes("Database not configured")) {
+      return Response.json(
+        { message: "Database not configured" },
+        { status: 503 }
+      );
+    }
     console.error("Error deleting project", error);
     return Response.json(
       { message: "Failed to delete project" },
