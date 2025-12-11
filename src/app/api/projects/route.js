@@ -1,27 +1,44 @@
-export async function GET() {
-  const projects = [
-    {
-      title: "Conway's Game of Life",
-      description: "Cellular automaton visualizer.",
-      image: "/images/placeholder-300x300.png",
-      link: "https://example.com/game-of-life",
-      keywords: ["algorithms", "simulation"],
-    },
-    {
-      title: "Portfolio v2",
-      description: "Dynamic portfolio built with Next.js and Tailwind.",
-      image: "/images/placeholder-300x300.png",
-      link: "https://example.com/portfolio-v2",
-      keywords: ["nextjs", "tailwind"],
-    },
-    {
-      title: "Pizza Order Dashboard",
-      description: "Dashboard for managing online pizza orders.",
-      image: "/images/placeholder-300x300.png",
-      link: "https://example.com/pizza-dashboard",
-      keywords: ["react", "dashboard"],
-    },
-  ];
+import { getProjects, createProject } from "@/lib/db";
+import { auth0 } from "@/lib/auth0";
+import { projectSchema } from "@/lib/schemas";
 
+export async function GET() {
+  const projects = await getProjects();
   return Response.json({ projects });
+}
+
+export async function POST(req) {
+  // Check authentication
+  const session = await auth0.getSession();
+  if (!session) {
+    return Response.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const body = await req.json();
+    
+    // Validate request body
+    const validated = projectSchema.parse({
+      title: body.title,
+      description: body.description || null,
+      image: body.image || "",
+      link: body.link || "",
+      keywords: body.keywords || [],
+    });
+
+    const id = await createProject(validated);
+    return Response.json({ id }, { status: 201 });
+  } catch (error) {
+    if (error.name === "ZodError") {
+      return Response.json(
+        { message: "Validation failed", errors: error.errors },
+        { status: 400 }
+      );
+    }
+    console.error("Error creating project", error);
+    return Response.json(
+      { message: "Failed to create project" },
+      { status: 500 }
+    );
+  }
 }

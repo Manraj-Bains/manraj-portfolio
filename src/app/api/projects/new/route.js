@@ -1,24 +1,40 @@
+import { NextResponse } from "next/server";
+import { createProject } from "@/lib/db";
+import { auth0 } from "@/lib/auth0";
+import { projectSchema } from "@/lib/schemas";
+
 export async function POST(req) {
+  // Check authentication
+  const session = await auth0.getSession();
+  if (!session) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    const formData = await req.formData();
+    const body = await req.json();
 
-    const title = formData.get("title");
-    const description = formData.get("description");
-    const img = formData.get("img");
-    const link = formData.get("link");
+    // Validate request body
+    const validated = projectSchema.parse({
+      title: body.title,
+      description: body.description || null,
+      image: body.image || "",
+      link: body.link || "",
+      keywords: body.keywords || [],
+    });
 
-    // keywords comes in as multiple "keywords" entries
-    const keywords = formData.getAll("keywords");
-
-    console.log("NEW PROJECT RECEIVED:");
-    console.log({ title, description, img, link, keywords });
-
-    return Response.json(
-      { ok: true, project: { title, description, img, laink, keywords } },
-      { status: 201 }
+    const id = await createProject(validated);
+    return NextResponse.json({ id }, { status: 201 });
+  } catch (error) {
+    if (error.name === "ZodError") {
+      return NextResponse.json(
+        { message: "Validation failed", errors: error.errors },
+        { status: 400 }
+      );
+    }
+    console.error("Error creating project", error);
+    return NextResponse.json(
+      { message: "Failed to create project" },
+      { status: 500 }
     );
-  } catch (err) {
-    console.error("POST ERROR:", err);
-    return Response.json({ ok: false, error: "Invalid payload" }, { status: 400 });
   }
 }
