@@ -27,8 +27,8 @@ export async function POST(req) {
     if (!resend || !from || !to) {
       console.error("Contact form misconfigured: missing RESEND vars");
       return NextResponse.json(
-        { ok: false, message: "Email not configured" },
-        { status: 500 }
+        { ok: false, message: "Email service not configured" },
+        { status: 503 }
       );
     }
 

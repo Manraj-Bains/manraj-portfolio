@@ -1,4 +1,4 @@
-import { auth0 } from "@/lib/auth0";
+import { auth0, isAuthConfigured } from "@/lib/auth0";
 import { getHero, updateHero } from "@/lib/db";
 
 const FALLBACK_HERO = {
@@ -29,11 +29,25 @@ async function fileToDataUrl(file) {
 }
 
 export async function GET() {
-  const hero = (await getHero()) || FALLBACK_HERO;
-  return Response.json({ hero });
+  try {
+    const hero = (await getHero()) || FALLBACK_HERO;
+    return Response.json({ hero });
+  } catch (error) {
+    console.error("Hero GET error:", error);
+    return Response.json(
+      { hero: FALLBACK_HERO, message: "Failed to load hero" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function PUT(req) {
+  if (!isAuthConfigured) {
+    return Response.json(
+      { message: "Auth0 not configured" },
+      { status: 500 }
+    );
+  }
   const session = await auth0.getSession();
   if (!session) {
     return Response.json({ message: "Unauthorized" }, { status: 401 });
@@ -70,6 +84,12 @@ export async function PUT(req) {
     const updated = await getHero();
     return Response.json({ id, hero: updated });
   } catch (error) {
+    if (error.message?.includes("Database not configured")) {
+      return Response.json(
+        { message: "Database not configured" },
+        { status: 503 }
+      );
+    }
     console.error("Hero update error:", error);
     return Response.json(
       { message: "Failed to update hero" },

@@ -1,12 +1,21 @@
 import { neon } from "@neondatabase/serverless";
 import { randomUUID } from "crypto";
 
-const sql = neon(process.env.NEON_DB_URL);
+let cachedSql = null;
+function getSql() {
+  const url = process.env.NEON_DB_URL;
+  if (!url) return null;
+  if (cachedSql) return cachedSql;
+  cachedSql = neon(url);
+  return cachedSql;
+}
 
 // ----------------------------------------------------
 // PROJECTS TABLE
 // ----------------------------------------------------
 export async function ensureProjectsTable() {
+  const sql = getSql();
+  if (!sql) return;
   await sql`
     CREATE TABLE IF NOT EXISTS projects (
       id UUID PRIMARY KEY,
@@ -22,6 +31,8 @@ export async function ensureProjectsTable() {
 }
 
 export async function getProjects() {
+  const sql = getSql();
+  if (!sql) return [];
   await ensureProjectsTable();
 
   const rows = await sql`
@@ -34,6 +45,8 @@ export async function getProjects() {
 }
 
 export async function getProject(id) {
+  const sql = getSql();
+  if (!sql) return null;
   await ensureProjectsTable();
 
   const rows = await sql`
@@ -47,6 +60,10 @@ export async function getProject(id) {
 }
 
 export async function createProject(data) {
+  const sql = getSql();
+  if (!sql) {
+    throw new Error("Database not configured");
+  }
   await ensureProjectsTable();
 
   const id = randomUUID();
@@ -68,6 +85,10 @@ export async function createProject(data) {
 }
 
 export async function updateProject(id, data) {
+  const sql = getSql();
+  if (!sql) {
+    throw new Error("Database not configured");
+  }
   await ensureProjectsTable();
 
   const { title, description, image, link, keywords } = data;
@@ -86,6 +107,10 @@ export async function updateProject(id, data) {
 }
 
 export async function deleteProject(id) {
+  const sql = getSql();
+  if (!sql) {
+    throw new Error("Database not configured");
+  }
   await ensureProjectsTable();
 
   await sql`
@@ -98,6 +123,8 @@ export async function deleteProject(id) {
 // HERO TABLE (LAB 5)
 // ----------------------------------------------------
 export async function ensureHeroTable() {
+  const sql = getSql();
+  if (!sql) return;
   await sql`
     CREATE TABLE IF NOT EXISTS hero (
       id UUID PRIMARY KEY,
@@ -112,6 +139,8 @@ export async function ensureHeroTable() {
 }
 
 export async function getHero() {
+  const sql = getSql();
+  if (!sql) return null;
   await ensureHeroTable();
 
   const rows = await sql`
@@ -124,6 +153,10 @@ export async function getHero() {
 }
 
 export async function updateHero(data) {
+  const sql = getSql();
+  if (!sql) {
+    throw new Error("Database not configured");
+  }
   await ensureHeroTable();
 
   const existing = await getHero();
